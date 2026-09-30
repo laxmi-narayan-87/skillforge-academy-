@@ -1,3 +1,31 @@
+## Engineering focus
+
+SkillForge Academy is an **applied AI product** focused on turning learner context into personalized learning and career pathways.
+
+### Product workflow
+
+```text
+Learner goals + skill context
+            ↓
+      AI-generated pathway
+            ↓
+ Resource recommendations
+            ↓
+ Conversational assistance
+            ↓
+      Progress tracking
+```
+
+### Engineering signal
+
+The project demonstrates the integration of an AI capability into a user-facing product workflow: collecting context, generating structured recommendations, persisting user progress, and exposing the result through a web application.
+
+### Scope
+
+This is an applied product project rather than a claim of novel model research. The engineering focus is the surrounding product workflow and AI integration.
+
+---
+
 
 # SkillForge Academy
 
