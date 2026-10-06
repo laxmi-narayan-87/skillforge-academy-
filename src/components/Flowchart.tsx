@@ -39,11 +39,11 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
 
     sections.forEach((section, sectionIndex) => {
       nextNodes.push({
-        id: \`section-\${sectionIndex}\`,
+        id: `section-${sectionIndex}`,
         type: "roadmapNode",
         position: { x: 800, y: yOffset },
         data: {
-          label: \`Stage \${sectionIndex + 1}: \${section.title}\`,
+          label: `Stage ${sectionIndex + 1}: ${section.title}`,
           type: "resource" as const,
         },
       });
@@ -52,7 +52,7 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
 
       section.topics.forEach((topic, topicIndex) => {
         nextNodes.push({
-          id: \`topic-\${sectionIndex}-\${topicIndex}\`,
+          id: `topic-${sectionIndex}-${topicIndex}`,
           type: "roadmapNode",
           position: {
             x: 800 + (topicIndex % 2 ? 400 : -400),
@@ -79,18 +79,18 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
       if (section.topics.length === 0) return;
 
       nextEdges.push({
-        id: \`e-section-\${sectionIndex}\`,
-        source: \`section-\${sectionIndex}\`,
-        target: \`topic-\${sectionIndex}-0\`,
+        id: `e-section-${sectionIndex}`,
+        source: `section-${sectionIndex}`,
+        target: `topic-${sectionIndex}-0`,
         type: "roadmapEdge",
       });
 
       section.topics.forEach((_, topicIndex) => {
         if (topicIndex < section.topics.length - 1) {
           nextEdges.push({
-            id: \`e-topic-\${sectionIndex}-\${topicIndex}\`,
-            source: \`topic-\${sectionIndex}-\${topicIndex}\`,
-            target: \`topic-\${sectionIndex}-\${topicIndex + 1}\`,
+            id: `e-topic-${sectionIndex}-${topicIndex}`,
+            source: `topic-${sectionIndex}-${topicIndex}`,
+            target: `topic-${sectionIndex}-${topicIndex + 1}`,
             type: "roadmapEdge",
           });
         }
@@ -98,9 +98,9 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
 
       if (sectionIndex < sections.length - 1) {
         nextEdges.push({
-          id: \`e-section-connect-\${sectionIndex}\`,
-          source: \`topic-\${sectionIndex}-\${section.topics.length - 1}\`,
-          target: \`section-\${sectionIndex + 1}\`,
+          id: `e-section-connect-${sectionIndex}`,
+          source: `topic-${sectionIndex}-${section.topics.length - 1}`,
+          target: `section-${sectionIndex + 1}`,
           type: "roadmapEdge",
         });
       }
@@ -129,7 +129,7 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
       void markTopicComplete(topic);
       toast({
         title: "Topic Completed! 🎉",
-        description: \`Great job completing "\${topic}"!\`,
+        description: `Great job completing "${topic}"!`,
         duration: 3000,
       });
     }
@@ -141,7 +141,7 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
     void markTopicComplete(currentTopic);
     toast({
       title: "Topic Completed! 🎉",
-      description: \`Great job completing "\${currentTopic}"!\`,
+      description: `Great job completing "${currentTopic}"!`,
       duration: 3000,
     });
   };
