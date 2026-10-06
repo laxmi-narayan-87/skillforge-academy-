@@ -11,11 +11,10 @@ import LearningStyleSection from "./roadmap-generator/LearningStyleSection";
 import CareerGoalSection from "./roadmap-generator/CareerGoalSection";
 
 interface AIRoadmapGeneratorProps {
-  onRoadmapGenerated: (roadmap: any) => void;
   initialPreferences?: UserPreferences;
 }
 
-const AIRoadmapGenerator = ({ onRoadmapGenerated, initialPreferences }: AIRoadmapGeneratorProps) => {
+const AIRoadmapGenerator = ({ initialPreferences }: AIRoadmapGeneratorProps) => {
   const { navigateToRoadmap } = useRoadmapNavigation();
   const { toast } = useToast();
   const [isGenerating, setIsGenerating] = useState(false);
@@ -31,8 +30,6 @@ const AIRoadmapGenerator = ({ onRoadmapGenerated, initialPreferences }: AIRoadma
 
     try {
       const roadmap = await generateRoadmap(formData);
-      onRoadmapGenerated(roadmap);
-      
       toast({
         title: "Roadmap Generated! 🎉",
         description: "Your personalized learning path has been generated.",
