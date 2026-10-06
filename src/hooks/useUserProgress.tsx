@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import type { UserProgress, UserPreferences } from "@/types/user";
@@ -19,6 +19,8 @@ export const useUserProgress = (roadmapId?: string) => {
     lastActivity: new Date(),
   });
 
+  const progressRef = useRef<UserProgress>(progress);
+
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY_PREFERENCES);
@@ -29,6 +31,10 @@ export const useUserProgress = (roadmapId?: string) => {
   });
 
   const { toast } = useToast();
+
+  useEffect(() => {
+    progressRef.current = progress;
+  }, [progress]);
 
   useEffect(() => {
     let mounted = true;
@@ -186,9 +192,10 @@ export const useUserProgress = (roadmapId?: string) => {
     if (!roadmapId) return;
 
     const { data: { user } } = await supabase.auth.getUser();
-    const nextCompletedTopics = progress.completedTopics.includes(topicId)
-      ? progress.completedTopics
-      : [...progress.completedTopics, topicId];
+    const currentTopics = progressRef.current.completedTopics;
+    const nextCompletedTopics = currentTopics.includes(topicId)
+      ? currentTopics
+      : [...currentTopics, topicId];
 
     setProgress(prev => ({
       ...prev,
