@@ -17,7 +17,7 @@ const RoadmapProgress = ({ completedTopics, totalTopics }: RoadmapProgressProps)
       <div className="w-full bg-gray-200 rounded-full h-2.5">
         <div
           className="bg-primary h-2.5 rounded-full"
-          style={{ width: \`\${progressPercentage}%\` }}
+          style={{ width: `${progressPercentage}%` }}
         />
       </div>
     </Card>
