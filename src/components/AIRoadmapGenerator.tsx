@@ -50,6 +50,8 @@ const AIRoadmapGenerator = ({ initialPreferences }: AIRoadmapGeneratorProps) => 
           title: careerGoal,
           description: `Personalized ${formData.skillLevel} roadmap for ${careerGoal}.`,
           sections: roadmap.sections,
+          resources: roadmap.resources ?? [],
+          topic_questions: {},
           user_id: user.id,
         })
         .select("id")
