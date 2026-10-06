@@ -28,7 +28,7 @@ const edgeTypes = {
 };
 
 export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: FlowchartProps) => {
-  const { progress, markTopicComplete } = useUserProgress(roadmapId);
+  const { progress, markTopicComplete, updateSkillLevel } = useUserProgress(roadmapId);
   const { toast } = useToast();
   const [showAssessment, setShowAssessment] = useState(false);
   const [currentTopic, setCurrentTopic] = useState("");
@@ -97,15 +97,12 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
       });
 
       if (sectionIndex < sections.length - 1) {
-        const nextSection = sections[sectionIndex + 1];
-        if (nextSection.topics.length > 0) {
-          nextEdges.push({
-            id: \`e-section-connect-\${sectionIndex}\`,
-            source: \`topic-\${sectionIndex}-\${section.topics.length - 1}\`,
-            target: \`section-\${sectionIndex + 1}\`,
-            type: "roadmapEdge",
-          });
-        }
+        nextEdges.push({
+          id: \`e-section-connect-\${sectionIndex}\`,
+          source: \`topic-\${sectionIndex}-\${section.topics.length - 1}\`,
+          target: \`section-\${sectionIndex + 1}\`,
+          type: "roadmapEdge",
+        });
       }
     });
 
@@ -138,8 +135,9 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
     }
   };
 
-  const handleAssessmentComplete = () => {
+  const handleAssessmentComplete = (skillLevel: "beginner" | "intermediate" | "advanced") => {
     setShowAssessment(false);
+    void updateSkillLevel(skillLevel);
     void markTopicComplete(currentTopic);
     toast({
       title: "Topic Completed! 🎉",
