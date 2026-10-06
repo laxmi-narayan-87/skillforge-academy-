@@ -47,6 +47,8 @@ const RoadmapView = () => {
         .from("roadmaps")
         .update({
           sections: newRoadmap.sections,
+          resources: newRoadmap.resources ?? [],
+          topic_questions: {},
           description: `Personalized ${progress.currentLevel || "beginner"} roadmap for ${roadmap.title}.`,
         })
         .eq("id", roadmap.id)
