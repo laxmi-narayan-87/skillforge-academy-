@@ -7,7 +7,6 @@ import Index from "./pages/Index";
 import RoadmapView from "./pages/RoadmapView";
 import Profile from "./pages/Profile";
 import Dashboard from "./pages/Dashboard";
-import Changelog from "./pages/Changelog";
 import About from "./pages/About";
 import Login from "./pages/Login";
 import Roadmaps from "./pages/Roadmaps";
@@ -27,7 +26,6 @@ const App = () => (
           <Route path="/roadmap/:id" element={<RoadmapView />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/changelog" element={<Changelog />} />
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
