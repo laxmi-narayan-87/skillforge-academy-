@@ -55,7 +55,7 @@ const getDemoRoadmap = (input: RoadmapInput) => ({
 
 const extractJson = (content: string) => {
   const trimmed = content.trim();
-  const fenced = trimmed.match(/\`\`\`(?:json)?\s*([\s\S]*?)\s*\`\`\`/i);
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
   return fenced?.[1] ?? trimmed;
 };
 
