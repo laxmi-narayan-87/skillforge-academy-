@@ -1,44 +1,60 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-import { UserProgress, UserPreferences } from "@/types/user";
+import type { UserProgress, UserPreferences } from "@/types/user";
 
 const STORAGE_KEY_PREFERENCES = "user_preferences";
 
-export const useUserProgress = () => {
-  const [progress, setProgress] = useState<UserProgress>(() => ({
+const defaultPreferences: UserPreferences = {
+  learningStyle: "visual",
+  hoursPerWeek: 5,
+  goals: [],
+};
+
+export const useUserProgress = (roadmapId?: string) => {
+  const [progress, setProgress] = useState<UserProgress>({
     completedTopics: [],
     currentLevel: "beginner",
     interests: [],
     lastActivity: new Date(),
-  }));
+  });
 
   const [preferences, setPreferences] = useState<UserPreferences>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_PREFERENCES);
-    return saved
-      ? JSON.parse(saved)
-      : {
-          learningStyle: "visual",
-          hoursPerWeek: 5,
-          goals: [],
-        };
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY_PREFERENCES);
+      return saved ? { ...defaultPreferences, ...JSON.parse(saved) } : defaultPreferences;
+    } catch {
+      return defaultPreferences;
+    }
   });
 
   const { toast } = useToast();
 
   useEffect(() => {
+    let mounted = true;
+
     const fetchUserProgress = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.user) return;
+      if (!roadmapId) return;
+
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        if (mounted) {
+          setProgress(prev => ({ ...prev, completedTopics: [] }));
+        }
+        return;
+      }
 
       const { data, error } = await supabase
-        .from('user_progress')
-        .select('completed_topics')
-        .eq('roadmap_id', window.location.pathname.split('/').pop())
+        .from("user_progress")
+        .select("completed_topics")
+        .eq("roadmap_id", roadmapId)
+        .eq("user_id", user.id)
         .maybeSingle();
 
+      if (!mounted) return;
+
       if (error) {
-        console.error('Error fetching progress:', error);
+        console.error("Error fetching progress:", error);
         toast({
           title: "Error fetching progress",
           description: "There was an error loading your progress.",
@@ -47,63 +63,71 @@ export const useUserProgress = () => {
         return;
       }
 
-      if (data) {
-        setProgress(prev => ({
-          ...prev,
-          completedTopics: data.completed_topics || [],
-        }));
-      }
+      setProgress(prev => ({
+        ...prev,
+        completedTopics: data?.completed_topics ?? [],
+      }));
     };
 
     fetchUserProgress();
 
-    // Listen for auth state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_OUT") {
         setProgress(prev => ({ ...prev, completedTopics: [] }));
-      } else if (event === 'SIGNED_IN') {
+      } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         fetchUserProgress();
       }
     });
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
     };
-  }, [toast]);
+  }, [roadmapId, toast]);
 
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
   }, [preferences]);
 
   const markTopicComplete = async (topicId: string) => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const roadmapId = window.location.pathname.split('/').pop() || '';
+    if (!roadmapId) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    const nextCompletedTopics = progress.completedTopics.includes(topicId)
+      ? progress.completedTopics
+      : [...progress.completedTopics, topicId];
 
     setProgress(prev => ({
       ...prev,
-      completedTopics: [...prev.completedTopics, topicId],
+      completedTopics: prev.completedTopics.includes(topicId)
+        ? prev.completedTopics
+        : [...prev.completedTopics, topicId],
       lastActivity: new Date(),
     }));
 
-    if (session?.user) {
-      const { error } = await supabase
-        .from('user_progress')
-        .upsert({
-          user_id: session.user.id,
-          roadmap_id: roadmapId,
-          completed_topics: [...progress.completedTopics, topicId],
-        }, {
-          onConflict: 'user_id,roadmap_id'
-        });
+    if (!user) return;
 
-      if (error) {
-        console.error('Error saving progress:', error);
-        toast({
-          title: "Error saving progress",
-          description: "There was an error saving your progress.",
-          variant: "destructive",
-        });
-      }
+    const { error } = await supabase
+      .from("user_progress")
+      .upsert({
+        user_id: user.id,
+        roadmap_id: roadmapId,
+        completed_topics: nextCompletedTopics,
+      }, {
+        onConflict: "user_id,roadmap_id",
+      });
+
+    if (error) {
+      console.error("Error saving progress:", error);
+      setProgress(prev => ({
+        ...prev,
+        completedTopics: prev.completedTopics.filter(topic => topic !== topicId),
+      }));
+      toast({
+        title: "Error saving progress",
+        description: "Your change could not be saved. Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -112,10 +136,12 @@ export const useUserProgress = () => {
   };
 
   const getRecommendedContent = () => {
+    const nextTopics = progress.completedTopics.length === 0
+      ? ["html-basics", "css-fundamentals"]
+      : ["javascript-basics", "react-introduction"];
+
     return {
-      nextTopics: progress.completedTopics.length === 0 
-        ? ["html-basics", "css-fundamentals"] 
-        : ["javascript-basics", "react-introduction"],
+      nextTopics,
       recommendedResources: preferences.learningStyle === "visual"
         ? ["video-tutorials", "interactive-demos"]
         : ["documentation", "practical-exercises"],
