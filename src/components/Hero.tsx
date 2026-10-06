@@ -37,12 +37,6 @@ const Hero = () => {
               <Link to="/roadmaps" className="hover:text-white/80">
                 Roadmaps
               </Link>
-              <Link to="/teams" className="hover:text-white/80">
-                Teams
-              </Link>
-              <Link to="/changelog" className="hover:text-white/80">
-                Changelog
-              </Link>
             </div>
           </div>
           <div className="flex items-center space-x-4">
