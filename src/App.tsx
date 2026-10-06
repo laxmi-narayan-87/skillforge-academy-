@@ -1,8 +1,7 @@
 import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { HashRouter, Routes, Route, Navigate } from "react-router-dom";
 import Index from "./pages/Index";
 import RoadmapView from "./pages/RoadmapView";
 import Profile from "./pages/Profile";
@@ -17,8 +16,7 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
-      <Sonner />
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/about" element={<About />} />
@@ -29,7 +27,7 @@ const App = () => (
           <Route path="/login" element={<Login />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
