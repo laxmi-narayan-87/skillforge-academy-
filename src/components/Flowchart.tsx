@@ -6,7 +6,7 @@ import { RoadmapNode } from "./roadmap/RoadmapNode";
 import { RoadmapEdge } from "./roadmap/RoadmapEdge";
 import { SkillAssessment } from "./SkillAssessment";
 import { Dialog, DialogContent } from "./ui/dialog";
-import type { AssessmentQuestion, TopicQuestions } from "@/hooks/useRoadmaps";
+import type { TopicQuestions } from "@/hooks/useRoadmaps";
 
 interface Section {
   title: string;
