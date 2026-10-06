@@ -23,23 +23,29 @@ export const SkillAssessment = ({ topic, questions, onComplete }: SkillAssessmen
   const [showResults, setShowResults] = useState(false);
   const { toast } = useToast();
 
+  if (questions.length === 0) {
+    return (
+      <Card className="p-6 text-center">
+        <h3 className="text-xl font-bold mb-4">No assessment available</h3>
+        <Button onClick={onComplete}>Complete Topic</Button>
+      </Card>
+    );
+  }
+
   const handleAnswer = (selectedAnswer: number) => {
-    if (selectedAnswer === questions[currentQuestion].correctAnswer) {
-      setScore(score + 1);
-      toast({
-        title: "Correct! 🎉",
-        description: "Great job on this question!",
-      });
-    } else {
-      toast({
-        title: "Not quite right",
-        description: "Keep practicing!",
-        variant: "destructive",
-      });
-    }
+    const isCorrect = selectedAnswer === questions[currentQuestion].correctAnswer;
+    const nextScore = score + (isCorrect ? 1 : 0);
+
+    setScore(nextScore);
+
+    toast({
+      title: isCorrect ? "Correct! 🎉" : "Not quite right",
+      description: isCorrect ? "Great job on this question!" : "Keep practicing!",
+      variant: isCorrect ? "default" : "destructive",
+    });
 
     if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
+      setCurrentQuestion(question => question + 1);
     } else {
       setShowResults(true);
     }
@@ -76,27 +82,22 @@ export const SkillAssessment = ({ topic, questions, onComplete }: SkillAssessmen
           >
             Retake Assessment
           </Button>
-          <Button
-            variant="default"
-            onClick={() => {
-              onComplete?.();
-            }}
-          >
-            Complete Topic
-          </Button>
+          <Button onClick={onComplete}>Complete Topic</Button>
         </div>
       </Card>
     );
   }
+
+  const question = questions[currentQuestion];
 
   return (
     <Card className="p-6">
       <h3 className="text-xl font-bold mb-4">
         {topic} - Question {currentQuestion + 1} of {questions.length}
       </h3>
-      <p className="mb-6">{questions[currentQuestion].text}</p>
+      <p className="mb-6">{question.text}</p>
       <div className="space-y-4">
-        {questions[currentQuestion].options.map((option, index) => (
+        {question.options.map((option, index) => (
           <Button
             key={index}
             variant="outline"
