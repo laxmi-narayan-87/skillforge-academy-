@@ -14,10 +14,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-3xl mx-auto mb-16">
             <h2 className="text-2xl font-bold mb-6">Generate Your Personal Learning Path</h2>
-            <AIRoadmapGenerator
-              onRoadmapGenerated={() => {}}
-              initialPreferences={preferences}
-            />
+            <AIRoadmapGenerator initialPreferences={preferences} />
           </div>
         </div>
 
