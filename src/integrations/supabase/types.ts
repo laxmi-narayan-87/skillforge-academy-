@@ -36,6 +36,8 @@ export type Database = {
           description: string | null
           id: string
           sections: Json
+          resources: Json
+          topic_questions: Json
           title: string
           user_id: string | null
         }
@@ -44,6 +46,8 @@ export type Database = {
           description?: string | null
           id?: string
           sections: Json
+          resources?: Json
+          topic_questions?: Json
           title: string
           user_id?: string | null
         }
@@ -52,6 +56,8 @@ export type Database = {
           description?: string | null
           id?: string
           sections?: Json
+          resources?: Json
+          topic_questions?: Json
           title?: string
           user_id?: string | null
         }
