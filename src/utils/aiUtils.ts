@@ -36,7 +36,7 @@ const getDemoRoadmap = (input: RoadmapInput) => ({
     {
       title: "Core Skills",
       topics: [
-        \`\${input.skillLevel} Level Programming\`,
+        `${input.skillLevel} Level Programming`,
         "Problem Solving",
         "Data Structures",
       ],
@@ -70,8 +70,8 @@ export const generateRoadmap = async (input: RoadmapInput) => {
   const genAI = new GoogleGenerativeAI(apiKey);
   const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
-  const prompt = \`Create a detailed learning roadmap for a \${input.skillLevel} level student interested in \${input.careerGoal}.
-They prefer \${input.learningStyle} learning style.
+  const prompt = `Create a detailed learning roadmap for a ${input.skillLevel} level student interested in ${input.careerGoal}.
+They prefer ${input.learningStyle} learning style.
 Return only valid JSON matching this structure:
 {
   "sections": [
@@ -80,7 +80,7 @@ Return only valid JSON matching this structure:
   "resources": [
     { "title": "string", "url": "https://...", "type": "documentation|course|tutorial|guide" }
   ]
-}\`;
+}`;
 
   const result = await model.generateContent(prompt);
   const content = (await result.response).text();
