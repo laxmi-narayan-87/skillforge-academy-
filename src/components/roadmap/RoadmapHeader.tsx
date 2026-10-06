@@ -1,10 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowLeft, BookOpen, Github, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/components/ui/use-toast";
-import { generateRoadmap } from "@/utils/aiUtils";
-import { supabase } from "@/integrations/supabase/client";
-import { useRoadmap } from "@/hooks/useRoadmaps";
 
 interface RoadmapHeaderProps {
   title: string;
