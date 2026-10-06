@@ -68,7 +68,7 @@ export const generateRoadmap = async (input: RoadmapInput) => {
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
 
   const prompt = \`Create a detailed learning roadmap for a \${input.skillLevel} level student interested in \${input.careerGoal}.
 They prefer \${input.learningStyle} learning style.
