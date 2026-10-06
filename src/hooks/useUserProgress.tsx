@@ -3,7 +3,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import type { UserProgress, UserPreferences } from "@/types/user";
 
-const STORAGE_KEY_PREFERENCES = "user_preferences";
 
 const defaultPreferences: UserPreferences = {
   learningStyle: "visual",
@@ -21,14 +20,7 @@ export const useUserProgress = (roadmapId?: string) => {
 
   const progressRef = useRef<UserProgress>(progress);
 
-  const [preferences, setPreferences] = useState<UserPreferences>(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY_PREFERENCES);
-      return saved ? { ...defaultPreferences, ...JSON.parse(saved) } : defaultPreferences;
-    } catch {
-      return defaultPreferences;
-    }
-  });
+  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
 
   const { toast } = useToast();
 
@@ -142,9 +134,6 @@ export const useUserProgress = (roadmapId?: string) => {
     };
   }, [roadmapId, toast]);
 
-  useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
-  }, [preferences]);
 
   const updatePreferences = async (newPreferences: UserPreferences) => {
     setPreferences(newPreferences);
