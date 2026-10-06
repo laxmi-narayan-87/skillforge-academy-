@@ -1,123 +1,88 @@
-## Engineering focus
-
-SkillForge Academy is an **applied AI product** focused on turning learner context into personalized learning and career pathways.
-
-### Product workflow
-
-```text
-Learner goals + skill context
-            ↓
-      AI-generated pathway
-            ↓
- Resource recommendations
-            ↓
- Conversational assistance
-            ↓
-      Progress tracking
-```
-
-### Engineering signal
-
-The project demonstrates the integration of an AI capability into a user-facing product workflow: collecting context, generating structured recommendations, persisting user progress, and exposing the result through a web application.
-
-### Scope
-
-This is an applied product project rather than a claim of novel model research. The engineering focus is the surrounding product workflow and AI integration.
-
----
-
-
 # SkillForge Academy
 
-**SkillForge Academy** is an AI-driven platform designed to provide personalized learning and career pathways for individuals seeking to enhance their skills and advance their careers.
+SkillForge Academy is a personalized learning platform that combines curated learning roadmaps, AI-assisted roadmap generation, interactive topic assessments, and persistent learning progress.
 
-## Table of Contents
+## Engineering focus
 
-- [Features](#features)
-- [Technologies Used](#technologies-used)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+The project focuses on product engineering around an AI feature rather than novel model research.
 
+Learner context (skill level + career goal + learning style)
+→ Gemini roadmap generation
+→ Structured roadmap validation
+→ Interactive React Flow learning path
+→ Topic assessment + completion
+→ Supabase progress persistence
 
-## Features
+## Implemented features
 
-- **Personalized Learning Roadmaps**: AI-generated pathways tailored to individual goals and skill levels.
-- **Real-Time Course Recommendations**: Up-to-date suggestions for top-rated courses.
-- **Interactive Chatbot Assistance**: Real-time support for user queries and guidance.
-- **Progress Tracking**: Monitor and assess your learning journey.
+- Curated learning roadmaps for frontend, backend, full-stack, DevOps, mobile, and web scraping.
+- AI-assisted roadmap generation with Gemini.
+- Zod validation for AI-generated roadmap structure.
+- Interactive roadmap visualization using React Flow.
+- Topic assessments connected to roadmap data.
+- Assessment-based skill-level updates.
+- Supabase email/password authentication.
+- User-scoped learning progress persistence.
+- Profile and learning-preference persistence through Supabase Auth user metadata.
+- Curated learning resources with real documentation/course links.
+- TanStack Query for server-state fetching and caching.
+- Responsive UI built with Tailwind CSS and shadcn/Radix components.
 
-## Technologies Used
+## Technology stack
 
-- **Frontend**: React, Tailwind CSS
-- **Backend**: Node.js, Express
-- **AI Integration**: OpenAI's GPT-4 via Thinkstack.ai
-- **Database**: Supabase
-- **Deployment**: Vercel
+- Frontend: React 18, TypeScript, Vite
+- Routing: React Router
+- Server state: TanStack React Query
+- Authentication and database: Supabase
+- AI: Google Gemini API
+- Validation: Zod
+- Interactive graph: React Flow
+- UI: Tailwind CSS, shadcn/Radix UI
+- Icons: Lucide React
 
-## Installation
+## Project structure
 
-To set up the project locally, follow these steps:
+- src/components — reusable UI and roadmap components
+- src/data — curated roadmap definitions
+- src/hooks — auth, roadmap, progress and preference logic
+- src/pages — route-level application screens
+- src/schemas — Zod validation schemas
+- src/types — shared TypeScript types
+- src/utils — AI and learning-resource utilities
+- src/integrations/supabase — Supabase client and generated database types
 
-1. **Clone the repository**:
+## Local development
 
-   ```bash
-   git clone https://github.com/laxmi-narayan-87/learning-pathfinder-08.git
-   ```
+    git clone https://github.com/laxmi-narayan-87/skillforge-academy-.git
+    cd skillforge-academy-
+    npm install
+    npm run dev
 
-2. **Navigate to the project directory**:
+Configure the Supabase project used by the application before using authenticated features.
 
-   ```bash
-   cd learning-pathfinder-08
-   ```
+If Gemini generation is enabled, configure VITE_GEMINI_API_KEY in the environment.
 
-3. **Install dependencies**:
+## Database security
 
-   ```bash
-   npm install
-   ```
+The repository includes:
 
-4. **Set up environment variables**:
+supabase/migrations/20261006143000_harden_user_data_rls.sql
 
-   Create a `.env` file in the root directory and add the necessary environment variables:
+Apply this migration to the linked Supabase project before production use. It enables Row Level Security and restricts profiles, roadmaps, and progress records to their owning authenticated user.
 
-   ```env
-   REACT_APP_SUPABASE_URL=your_supabase_url
-   REACT_APP_SUPABASE_ANON_KEY=your_supabase_anon_key
-   REACT_APP_OPENAI_API_KEY=your_openai_api_key
-   ```
+## Verification
 
-5. **Start the development server**:
+Run locally:
 
-   ```bash
-   npm start
-   ```
+    npm run lint
+    npm run build
 
-   The application should now be running at `http://localhost:3000`.
+GitHub Actions also runs lint and build verification for pushes to main and pull requests.
 
-## Usage
+## Important implementation notes
 
-1. **Sign Up / Log In**: Create an account or log in with your existing credentials.
-2. **Set Your Goals**: Input your career aspirations and current skill levels.
-3. **Receive Personalized Roadmap**: View your AI-generated learning pathway.
-4. **Explore Course Recommendations**: Access suggested courses aligned with your roadmap.
-5. **Interact with the Chatbot**: Get real-time assistance and answers to your queries.
-6. **Track Progress**: Monitor your advancement through the learning modules.
-
-## Contributing
-
-We welcome contributions from the community. To contribute:
-
-1. Fork the repository.
-2. Create a new branch: `git checkout -b feature/YourFeatureName`.
-3. Make your changes and commit them: `git commit -m 'Add some feature'`.
-4. Push to the branch: `git push origin feature/YourFeatureName`.
-5. Open a pull request detailing your changes.
-
-Please ensure your code adheres to our coding standards and includes relevant tests.
-
-## License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
-
+- Static roadmaps use stable application IDs such as frontend and backend.
+- Generated roadmaps use their Supabase UUID as the route and progress identifier.
+- Topic progress is scoped by both user_id and roadmap_id.
+- AI output is validated before it is accepted by the application.
+- Learning links are curated resources, not a live course-ranking API.
