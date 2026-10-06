@@ -85,7 +85,10 @@ const getRoadmapData = async (id: string): Promise<Roadmap | null> => {
       title: data.title,
       description: data.description || "",
       sections: parseSections(data.sections),
-      resources: [],
+      resources: Array.isArray(data.resources)
+        ? data.resources as unknown as Resource[]
+        : [],
+      topicQuestions: data.topic_questions as unknown as TopicQuestions | undefined,
     };
   }
 
@@ -106,8 +109,10 @@ const getRoadmapData = async (id: string): Promise<Roadmap | null> => {
     title: legacyData.title,
     description: legacyData.description || "",
     sections: parseSections(legacyData.sections),
-    resources: Array.isArray(data.resources) ? data.resources as unknown as Resource[] : [],
-      topicQuestions: data.topic_questions as unknown as TopicQuestions | undefined,
+    resources: Array.isArray(legacyData.resources)
+      ? legacyData.resources as unknown as Resource[]
+      : [],
+    topicQuestions: legacyData.topic_questions as unknown as TopicQuestions | undefined,
     };
 };
 
@@ -127,7 +132,10 @@ export const useRoadmaps = () => {
         title: roadmap.title,
         description: roadmap.description || "",
         sections: parseSections(roadmap.sections),
-        resources: [],
+        resources: Array.isArray(roadmap.resources)
+          ? roadmap.resources as unknown as Resource[]
+          : [],
+        topicQuestions: roadmap.topic_questions as unknown as TopicQuestions | undefined,
       }));
 
       return {
