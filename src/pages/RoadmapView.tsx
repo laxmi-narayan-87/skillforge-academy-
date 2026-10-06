@@ -65,7 +65,7 @@ const RoadmapView = () => {
         description: "A new version of your learning path is ready.",
       });
 
-      navigate(\`/roadmap/\${inserted.id}\`, { replace: true });
+      navigate(`/roadmap/${inserted.id}`, { replace: true });
     } catch (error) {
       console.error("Error regenerating roadmap:", error);
       toast({
