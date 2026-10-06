@@ -106,8 +106,9 @@ const getRoadmapData = async (id: string): Promise<Roadmap | null> => {
     title: legacyData.title,
     description: legacyData.description || "",
     sections: parseSections(legacyData.sections),
-    resources: [],
-  };
+    resources: Array.isArray(data.resources) ? data.resources as unknown as Resource[] : [],
+      topicQuestions: data.topic_questions as unknown as TopicQuestions | undefined,
+    };
 };
 
 export const useRoadmaps = () => {
