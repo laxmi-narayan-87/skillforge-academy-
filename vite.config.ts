@@ -4,7 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
-  base: "/skillforge-academy-/",
+  base: process.env.VERCEL ? "/" : "/skillforge-academy-/",
   server: {
     host: "0.0.0.0", // This ensures proper network access
     port: 8080,
