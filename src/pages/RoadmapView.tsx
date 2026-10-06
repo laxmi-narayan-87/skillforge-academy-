@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useRoadmap } from "@/hooks/useRoadmaps";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useUserProgress } from "@/hooks/useUserProgress";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import { Flowchart } from "@/components/Flowchart";
 const RoadmapView = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { data: roadmap, isLoading, error } = useRoadmap(id || "");
   const { progress, preferences, updatePreferences } = useUserProgress(roadmap?.id);
   const { toast } = useToast();
@@ -30,11 +31,7 @@ const RoadmapView = () => {
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
-      toast({
-        title: "Sign in required",
-        description: "You must be logged in to regenerate roadmaps.",
-        variant: "destructive",
-      });
+      toast({ title: "Sign in required", description: "You must be logged in to regenerate roadmaps.", variant: "destructive" });
       return;
     }
 
@@ -45,27 +42,20 @@ const RoadmapView = () => {
         learningStyle: preferences.learningStyle || "visual",
       });
 
-      const { data: inserted, error: insertError } = await supabase
+      if (roadmap.id !== id && !roadmap.id) throw new Error("Invalid roadmap.");
+      const { error: updateError } = await supabase
         .from("roadmaps")
-        .insert({
-          title: roadmap.title,
-          description: roadmap.description,
+        .update({
           sections: newRoadmap.sections,
-          user_id: user.id,
+          description: `Personalized ${progress.currentLevel || "beginner"} roadmap for ${roadmap.title}.`,
         })
-        .select("id")
-        .single();
+        .eq("id", roadmap.id)
+        .eq("user_id", user.id);
 
-      if (insertError || !inserted) {
-        throw insertError ?? new Error("Roadmap was not created.");
-      }
+      if (updateError) throw updateError;
 
-      toast({
-        title: "Roadmap Regenerated!",
-        description: "A new version of your learning path is ready.",
-      });
-
-      navigate(`/roadmap/${inserted.id}`, { replace: true });
+      await queryClient.invalidateQueries({ queryKey: ["roadmap", roadmap.id] });
+      toast({ title: "Roadmap Regenerated!", description: "Your learning path has been updated." });
     } catch (error) {
       console.error("Error regenerating roadmap:", error);
       toast({
@@ -76,57 +66,26 @@ const RoadmapView = () => {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" />
-      </div>
-    );
-  }
+  if (isLoading) return <div className="flex items-center justify-center min-h-screen"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-primary" /></div>;
 
   if (error || !roadmap) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <h1 className="text-2xl font-bold mb-4">Roadmap not found</h1>
-        <Link to="/" className="text-primary hover:underline">Return to homepage</Link>
-      </div>
-    );
+    return <div className="flex flex-col items-center justify-center min-h-screen"><h1 className="text-2xl font-bold mb-4">Roadmap not found</h1><Link to="/" className="text-primary hover:underline">Return to homepage</Link></div>;
   }
 
-  const totalTopics = roadmap.sections.reduce(
-    (acc, section) => acc + section.topics.length,
-    0
-  );
+  const totalTopics = roadmap.sections.reduce((acc, section) => acc + section.topics.length, 0);
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <RoadmapHeader
-        title={roadmap.title}
-        description={roadmap.description}
-        onRegenerate={handleRegenerateRoadmap}
-      />
-
+      <RoadmapHeader title={roadmap.title} description={roadmap.description} onRegenerate={handleRegenerateRoadmap} />
       <RoadmapHero id={roadmap.id} title={roadmap.title} description={roadmap.description} />
-
       <RoadmapProgress completedTopics={progress.completedTopics} totalTopics={totalTopics} />
-
       <div className="container mx-auto py-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4">Learning Path</h2>
-          <Flowchart
-            sections={roadmap.sections}
-            topicQuestions={roadmap.topicQuestions}
-            roadmapId={roadmap.id}
-          />
+          <Flowchart sections={roadmap.sections} topicQuestions={roadmap.topicQuestions} roadmapId={roadmap.id} />
         </div>
       </div>
-
-      <RoadmapContent
-        resources={roadmap.resources}
-        topCourses={topCourses || []}
-        preferences={preferences}
-        onUpdatePreferences={updatePreferences}
-      />
+      <RoadmapContent resources={roadmap.resources} topCourses={topCourses || []} preferences={preferences} onUpdatePreferences={updatePreferences} />
     </div>
   );
 };
