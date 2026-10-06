@@ -33,6 +33,57 @@ export const useUserProgress = (roadmapId?: string) => {
   useEffect(() => {
     let mounted = true;
 
+    const loadUserSettings = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!mounted || !user) return;
+
+      const metadata = user.user_metadata ?? {};
+      if (metadata.preferences) {
+        setPreferences({ ...defaultPreferences, ...metadata.preferences });
+      }
+
+      if (
+        metadata.skillLevel === "beginner" ||
+        metadata.skillLevel === "intermediate" ||
+        metadata.skillLevel === "advanced"
+      ) {
+        setProgress(prev => ({ ...prev, currentLevel: metadata.skillLevel }));
+      }
+    };
+
+    loadUserSettings();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        setProgress(prev => ({
+          ...prev,
+          completedTopics: [],
+          currentLevel: "beginner",
+        }));
+      } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+        const metadata = session?.user?.user_metadata ?? {};
+        if (metadata.preferences) {
+          setPreferences({ ...defaultPreferences, ...metadata.preferences });
+        }
+        if (
+          metadata.skillLevel === "beginner" ||
+          metadata.skillLevel === "intermediate" ||
+          metadata.skillLevel === "advanced"
+        ) {
+          setProgress(prev => ({ ...prev, currentLevel: metadata.skillLevel }));
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    let mounted = true;
+
     const fetchUserProgress = async () => {
       if (!roadmapId) return;
 
@@ -74,7 +125,7 @@ export const useUserProgress = (roadmapId?: string) => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
         setProgress(prev => ({ ...prev, completedTopics: [] }));
-      } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
+      } else if (event === "SIGNED_IN") {
         fetchUserProgress();
       }
     });
@@ -88,6 +139,48 @@ export const useUserProgress = (roadmapId?: string) => {
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_PREFERENCES, JSON.stringify(preferences));
   }, [preferences]);
+
+  const updatePreferences = async (newPreferences: UserPreferences) => {
+    setPreferences(newPreferences);
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase.auth.updateUser({
+      data: { preferences: newPreferences },
+    });
+
+    if (error) {
+      toast({
+        title: "Could not save preferences",
+        description: "Your preferences were updated locally but could not be synced.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const updateSkillLevel = async (level: "beginner" | "intermediate" | "advanced") => {
+    setProgress(prev => ({
+      ...prev,
+      currentLevel: level,
+      lastActivity: new Date(),
+    }));
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase.auth.updateUser({
+      data: { skillLevel: level },
+    });
+
+    if (error) {
+      toast({
+        title: "Could not save skill level",
+        description: "The level was updated locally but could not be synced.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const markTopicComplete = async (topicId: string) => {
     if (!roadmapId) return;
@@ -131,10 +224,6 @@ export const useUserProgress = (roadmapId?: string) => {
     }
   };
 
-  const updatePreferences = (newPreferences: UserPreferences) => {
-    setPreferences(newPreferences);
-  };
-
   const getRecommendedContent = () => {
     const nextTopics = progress.completedTopics.length === 0
       ? ["html-basics", "css-fundamentals"]
@@ -153,6 +242,7 @@ export const useUserProgress = (roadmapId?: string) => {
     preferences,
     markTopicComplete,
     updatePreferences,
+    updateSkillLevel,
     getRecommendedContent,
   };
 };
