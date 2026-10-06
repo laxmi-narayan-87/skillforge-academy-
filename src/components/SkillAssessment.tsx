@@ -14,7 +14,7 @@ interface Question {
 interface SkillAssessmentProps {
   topic: string;
   questions: Question[];
-  onComplete?: () => void;
+  onComplete?: (skillLevel: "beginner" | "intermediate" | "advanced") => void;
 }
 
 export const SkillAssessment = ({ topic, questions, onComplete }: SkillAssessmentProps) => {
@@ -27,7 +27,7 @@ export const SkillAssessment = ({ topic, questions, onComplete }: SkillAssessmen
     return (
       <Card className="p-6 text-center">
         <h3 className="text-xl font-bold mb-4">No assessment available</h3>
-        <Button onClick={onComplete}>Complete Topic</Button>
+        <Button onClick={() => onComplete?.("beginner")}>Complete Topic</Button>
       </Card>
     );
   }
@@ -53,9 +53,9 @@ export const SkillAssessment = ({ topic, questions, onComplete }: SkillAssessmen
 
   const getSkillLevel = () => {
     const percentage = (score / questions.length) * 100;
-    if (percentage >= 80) return { text: "Expert", icon: Award };
-    if (percentage >= 60) return { text: "Intermediate", icon: Star };
-    return { text: "Beginner", icon: GraduationCap };
+    if (percentage >= 80) return { text: "Expert", level: "advanced" as const, icon: Award };
+    if (percentage >= 60) return { text: "Intermediate", level: "intermediate" as const, icon: Star };
+    return { text: "Beginner", level: "beginner" as const, icon: GraduationCap };
   };
 
   if (showResults) {
@@ -82,7 +82,9 @@ export const SkillAssessment = ({ topic, questions, onComplete }: SkillAssessmen
           >
             Retake Assessment
           </Button>
-          <Button onClick={onComplete}>Complete Topic</Button>
+          <Button onClick={() => onComplete?.(skillLevel.level)}>
+            Complete Topic
+          </Button>
         </div>
       </Card>
     );
