@@ -20,9 +20,9 @@ const RoadmapView = () => {
   const { toast } = useToast();
 
   const { data: topCourses } = useQuery({
-    queryKey: ["courses", roadmap?.id],
-    queryFn: () => fetchTopCourses(roadmap?.id || ""),
-    enabled: !!roadmap?.id,
+    queryKey: ["courses", roadmap?.title],
+    queryFn: () => fetchTopCourses(roadmap?.title || ""),
+    enabled: !!roadmap?.title,
   });
 
   const handleRegenerateRoadmap = async () => {
