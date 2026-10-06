@@ -56,11 +56,16 @@ Learner context (skill level + career goal + learning style)
     git clone https://github.com/laxmi-narayan-87/skillforge-academy-.git
     cd skillforge-academy-
     npm install
+    cp .env.example .env
     npm run dev
 
-Configure the Supabase project used by the application before using authenticated features.
+Set these variables in .env:
 
-If Gemini generation is enabled, configure VITE_GEMINI_API_KEY in the environment.
+- VITE_SUPABASE_URL
+- VITE_SUPABASE_PUBLISHABLE_KEY
+- VITE_GEMINI_API_KEY
+
+Only use a Supabase publishable/anon key in the browser. Never put a Supabase secret/service-role key in VITE_* variables.
 
 ## Database security
 
