@@ -31,10 +31,8 @@ const About = () => {
               <CardContent>
                 <ul className="list-disc list-inside space-y-2 text-gray-600">
                   <li>Customized learning paths for different technology stacks</li>
-                  <li>Community-driven content and resources</li>
                   <li>Interactive roadmaps with progress tracking</li>
                   <li>Expert-curated learning materials</li>
-                  <li>Collaborative learning environment</li>
                 </ul>
               </CardContent>
             </Card>
@@ -48,14 +46,6 @@ const About = () => {
                   <div>
                     <h4 className="font-semibold mb-2">Structured Learning</h4>
                     <p>Follow clear, step-by-step paths to master new technologies</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Community Support</h4>
-                    <p>Learn alongside peers and get help when needed</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold mb-2">Updated Content</h4>
-                    <p>Stay current with the latest industry trends and technologies</p>
                   </div>
                   <div>
                     <h4 className="font-semibold mb-2">Track Progress</h4>
