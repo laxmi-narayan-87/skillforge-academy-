@@ -67,11 +67,10 @@ export const generateRoadmap = async (input: RoadmapInput) => {
     return getDemoRoadmap(input);
   }
 
-  try {
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
-    const prompt = \`Create a detailed learning roadmap for a \${input.skillLevel} level student interested in \${input.careerGoal}.
+  const prompt = \`Create a detailed learning roadmap for a \${input.skillLevel} level student interested in \${input.careerGoal}.
 They prefer \${input.learningStyle} learning style.
 Return only valid JSON matching this structure:
 {
@@ -83,23 +82,25 @@ Return only valid JSON matching this structure:
   ]
 }\`;
 
-    const result = await model.generateContent(prompt);
-    const content = (await result.response).text();
+  const result = await model.generateContent(prompt);
+  const content = (await result.response).text();
 
-    if (!content) {
-      throw new Error("No content received from Gemini");
-    }
-
-    const parsed = RoadmapSchema.safeParse(JSON.parse(extractJson(content)));
-
-    if (!parsed.success) {
-      console.error("Invalid Gemini roadmap schema:", parsed.error.flatten());
-      throw new Error("Gemini returned an invalid roadmap format.");
-    }
-
-    return parsed.data;
-  } catch (error) {
-    console.error("Error generating roadmap:", error);
-    return getDemoRoadmap(input);
+  if (!content) {
+    throw new Error("Gemini returned an empty response.");
   }
+
+  let parsedJson: unknown;
+  try {
+    parsedJson = JSON.parse(extractJson(content));
+  } catch {
+    throw new Error("Gemini returned invalid JSON.");
+  }
+
+  const parsed = RoadmapSchema.safeParse(parsedJson);
+  if (!parsed.success) {
+    console.error("Invalid Gemini roadmap schema:", parsed.error.flatten());
+    throw new Error("Gemini returned an invalid roadmap format.");
+  }
+
+  return parsed.data;
 };
