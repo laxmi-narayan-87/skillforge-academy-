@@ -12,7 +12,7 @@ const RoadmapHeader = ({ title, description, onRegenerate }: RoadmapHeaderProps)
   return (
     <div className="bg-white border-b">
       <div className="container mx-auto py-8">
-        <Link to="/" className="inline-flex items-center text-primary mb-6 hover:text-primary/80">
+        <Link to="/roadmaps" className="inline-flex items-center text-primary mb-6 hover:text-primary/80">
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back to Roadmaps
         </Link>
@@ -27,11 +27,25 @@ const RoadmapHeader = ({ title, description, onRegenerate }: RoadmapHeaderProps)
                 <RefreshCw className="h-4 w-4" />
                 Regenerate Roadmap
               </Button>
-              <Button variant="outline" className="gap-2">
-                <Github className="h-4 w-4" />
-                Contribute
+              <Button variant="outline" className="gap-2" asChild>
+                <a
+                  href="https://github.com/laxmi-narayan-87/skillforge-academy-"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <Github className="h-4 w-4" />
+                  Contribute
+                </a>
               </Button>
-              <Button variant="outline" className="gap-2">
+              <Button
+                variant="outline"
+                className="gap-2"
+                onClick={() =>
+                  document
+                    .getElementById("learning-resources")
+                    ?.scrollIntoView({ behavior: "smooth", block: "start" })
+                }
+              >
                 <BookOpen className="h-4 w-4" />
                 Resources
               </Button>
