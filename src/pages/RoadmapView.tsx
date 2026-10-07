@@ -11,6 +11,9 @@ import RoadmapProgress from "@/components/roadmap/RoadmapProgress";
 import RoadmapContent from "@/components/roadmap/RoadmapContent";
 import RoadmapHero from "@/components/roadmap/RoadmapHero";
 import { Flowchart } from "@/components/Flowchart";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ClipboardCheck, ArrowRight } from "lucide-react";
 
 const RoadmapView = () => {
   const { id } = useParams();
@@ -81,6 +84,33 @@ const RoadmapView = () => {
       <RoadmapHeader title={roadmap.title} description={roadmap.description} onRegenerate={handleRegenerateRoadmap} />
       <RoadmapHero id={roadmap.id} title={roadmap.title} description={roadmap.description} />
       <RoadmapProgress completedTopics={progress.completedTopics} totalTopics={totalTopics} />
+
+      {roadmap.id === "frontend" && (
+        <div className="container mx-auto pb-2">
+          <Card className="border-primary/20 bg-primary/5 p-5 sm:p-6">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10">
+                  <ClipboardCheck className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">Test your Frontend skills</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Take the 10-question assessment to check your HTML, CSS, JavaScript, React, accessibility, performance, and testing fundamentals.
+                  </p>
+                </div>
+              </div>
+              <Button asChild className="shrink-0">
+                <Link to="/assessment/frontend">
+                  Start Assessment
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
       <div className="container mx-auto py-8">
         <div className="mb-8">
           <h2 className="text-2xl font-bold mb-4">Learning Path</h2>
