@@ -1,6 +1,7 @@
 import { ReactFlow, Background, Controls, MiniMap } from "@xyflow/react";
 import { useMemo, useState } from "react";
 import { useUserProgress } from "@/hooks/useUserProgress";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { RoadmapNode } from "./roadmap/RoadmapNode";
 import { RoadmapEdge } from "./roadmap/RoadmapEdge";
@@ -109,8 +110,17 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
     return nextEdges;
   }, [sections]);
 
-  const handleNodeClick = (_event: React.MouseEvent, node: { data?: { type?: string; label?: string } }) => {
+  const handleNodeClick = async (_event: React.MouseEvent, node: { data?: { type?: string; label?: string } }) => {
     if (node.data?.type !== "topic" || !node.data.label) return;
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Sign in to track progress",
+        description: "Create an account or sign in before completing roadmap topics.",
+      });
+      return;
+    }
 
     const topic = node.data.label;
     if (progress.completedTopics.includes(topic)) {
@@ -135,10 +145,19 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
     }
   };
 
-  const handleAssessmentComplete = (skillLevel: "beginner" | "intermediate" | "advanced") => {
+  const handleAssessmentComplete = async (skillLevel: "beginner" | "intermediate" | "advanced") => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Sign in to save your progress",
+        description: "Your assessment result is ready, but completing this topic requires an account.",
+      });
+      return;
+    }
+
     setShowAssessment(false);
-    void updateSkillLevel(skillLevel);
-    void markTopicComplete(currentTopic);
+    await updateSkillLevel(skillLevel);
+    await markTopicComplete(currentTopic);
     toast({
       title: "Topic Completed! 🎉",
       description: `Great job completing "${currentTopic}"!`,
