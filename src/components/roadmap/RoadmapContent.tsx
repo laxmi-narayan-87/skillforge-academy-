@@ -19,7 +19,7 @@ const RoadmapContent = ({
   onUpdatePreferences,
 }: RoadmapContentProps) => {
   return (
-    <div className="container mx-auto py-8">
+    <div id="learning-resources" className="container mx-auto py-8 scroll-mt-6">
       <Tabs defaultValue="resources" className="w-full">
         <TabsList className="mb-8">
           <TabsTrigger value="resources">Learning Resources</TabsTrigger>
