@@ -113,15 +113,6 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
   const handleNodeClick = async (_event: React.MouseEvent, node: { data?: { type?: string; label?: string } }) => {
     if (node.data?.type !== "topic" || !node.data.label) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast({
-        title: "Sign in to track progress",
-        description: "Create an account or sign in before completing roadmap topics.",
-      });
-      return;
-    }
-
     const topic = node.data.label;
     if (progress.completedTopics.includes(topic)) {
       toast({
@@ -132,30 +123,51 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
     }
 
     setCurrentTopic(topic);
+    setShowAssessment(true);
+  };
 
-    if (topicQuestions[topic]?.length) {
-      setShowAssessment(true);
-    } else {
-      void markTopicComplete(topic);
-      toast({
-        title: "Topic Completed! 🎉",
-        description: `Great job completing "${topic}"!`,
-        duration: 3000,
-      });
-    }
+  const getAssessmentQuestions = (topic: string) => {
+    const existingQuestions = topicQuestions[topic];
+    if (existingQuestions?.length) return existingQuestions;
+
+    return [
+      {
+        id: 1,
+        text: `What is the best way to demonstrate practical understanding of "${topic}"?`,
+        options: [
+          "Build and test a small working example",
+          "Only memorize definitions",
+          "Skip implementation practice",
+          "Avoid documentation",
+        ],
+        correctAnswer: 0,
+      },
+      {
+        id: 2,
+        text: `Which learning practice is most useful when studying "${topic}"?`,
+        options: [
+          "Apply it in a project and verify the result",
+          "Read about it once and never practice",
+          "Copy code without testing it",
+          "Ignore errors and warnings",
+        ],
+        correctAnswer: 0,
+      },
+    ];
   };
 
   const handleAssessmentComplete = async (skillLevel: "beginner" | "intermediate" | "advanced") => {
     const { data: { user } } = await supabase.auth.getUser();
+    setShowAssessment(false);
+
     if (!user) {
       toast({
-        title: "Sign in to save your progress",
-        description: "Your assessment result is ready, but completing this topic requires an account.",
+        title: "Assessment completed",
+        description: "Sign in to save your score and topic progress.",
       });
       return;
     }
 
-    setShowAssessment(false);
     await updateSkillLevel(skillLevel);
     await markTopicComplete(currentTopic);
     toast({
@@ -200,10 +212,10 @@ export const Flowchart = ({ sections, topicQuestions = {}, roadmapId }: Flowchar
 
       <Dialog open={showAssessment} onOpenChange={setShowAssessment}>
         <DialogContent className="max-w-2xl">
-          {currentTopic && topicQuestions[currentTopic] && (
+          {currentTopic && (
             <SkillAssessment
               topic={currentTopic}
-              questions={topicQuestions[currentTopic]}
+              questions={getAssessmentQuestions(currentTopic)}
               onComplete={handleAssessmentComplete}
             />
           )}
