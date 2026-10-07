@@ -139,8 +139,6 @@ export const useUserProgress = (roadmapId?: string) => {
     setPreferences(newPreferences);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
-
     const { error } = await supabase.auth.updateUser({
       data: { preferences: newPreferences },
     });
@@ -181,6 +179,14 @@ export const useUserProgress = (roadmapId?: string) => {
     if (!roadmapId) return;
 
     const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast({
+        title: "Sign in to track progress",
+        description: "Create an account or sign in before completing roadmap topics.",
+      });
+      return;
+    }
+
     const currentTopics = progressRef.current.completedTopics;
     const nextCompletedTopics = currentTopics.includes(topicId)
       ? currentTopics
