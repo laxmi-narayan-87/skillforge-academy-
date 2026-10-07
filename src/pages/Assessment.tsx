@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { Award, ArrowLeft, CheckCircle2, ClipboardCheck, GraduationCap, RotateCcw, Save, Star } from "lucide-react";
+import { Award, ArrowLeft, ClipboardCheck, GraduationCap, RotateCcw, Save, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
