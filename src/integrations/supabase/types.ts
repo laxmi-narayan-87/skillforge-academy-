@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      assessment_results: {
+        Row: {
+          answers: Json
+          created_at: string
+          id: string
+          roadmap_key: string
+          score: number
+          skill_level: string
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          roadmap_key: string
+          score: number
+          skill_level: string
+          total_questions: number
+          user_id: string
+        }
+        Update: {
+          answers?: Json
+          created_at?: string
+          id?: string
+          roadmap_key?: string
+          score?: number
+          skill_level?: string
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
