@@ -52,7 +52,7 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.53.0",
-    "react-router-dom": "^6.30.6",
+    "react-router-dom": "^7.18.4",
     "tailwind-merge": "^2.5.2",
     "tailwindcss-animate": "^1.0.7",
     "zod": "^3.23.8"
@@ -74,5 +74,8 @@
     "typescript": "^5.5.3",
     "typescript-eslint": "^8.0.1",
     "vite": "^6.4.4"
+  },
+  "overrides": {
+    "postcss-selector-parser": "7.1.6"
   }
 }
