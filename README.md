@@ -63,9 +63,8 @@ Set these variables in .env:
 
 - VITE_SUPABASE_URL
 - VITE_SUPABASE_PUBLISHABLE_KEY
-- VITE_GEMINI_API_KEY
 
-Only use a Supabase publishable/anon key in the browser. Never put a Supabase secret/service-role key in VITE_* variables.
+Only use a Supabase publishable/anon key in the browser. Never put a Supabase secret/service-role key or Gemini API key in VITE_* variables. Roadmap generation now runs through the authenticated Supabase Edge Function `generate-roadmap`; configure `GEMINI_API_KEY` as an Edge Function secret, not a frontend variable.
 
 ## Database security
 
@@ -73,7 +72,7 @@ The repository includes:
 
 supabase/migrations/20261006143000_harden_user_data_rls.sql
 
-Apply this migration to the linked Supabase project before production use. It enables Row Level Security and restricts profiles, roadmaps, and progress records to their owning authenticated user.
+Apply all migrations to the linked Supabase project before production use. They enable Row Level Security for user-owned data and add a per-user hourly quota for AI roadmap generation. Deploy the Edge Function and set its secret before using AI generation.\n\nDeployment checklist:\n\n    supabase db push\n    supabase functions deploy generate-roadmap\n    supabase secrets set GEMINI_API_KEY=your_gemini_api_key\n\nRun the Edge Function validation tests with `deno test supabase/functions/_shared/roadmap_test.ts`. The quota migration and function must both be deployed for AI generation to work.
 
 ## Verification
 
