@@ -1,5 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RoadmapInput {
   skillLevel: string;
@@ -8,99 +8,54 @@ interface RoadmapInput {
 }
 
 const RoadmapSchema = z.object({
-  sections: z.array(
-    z.object({
-      title: z.string().min(1),
-      topics: z.array(z.string().min(1)).min(1),
-    })
-  ).min(1),
-  resources: z.array(
-    z.object({
-      title: z.string().min(1),
-      url: z.string().url(),
-      type: z.enum(["documentation", "course", "tutorial", "guide"]),
-    })
-  ).optional().default([]),
+  sections: z.array(z.object({
+    title: z.string().trim().min(1).max(120),
+    topics: z.array(z.string().trim().min(1).max(160)).min(1).max(20),
+  })).min(1).max(12),
+  resources: z.array(z.object({
+    title: z.string().trim().min(1).max(160),
+    url: z.string().url().refine((value) => {
+      try { return new URL(value).protocol === "https:"; } catch { return false; }
+    }, "Resource links must use HTTPS"),
+    type: z.enum(["documentation", "course", "tutorial", "guide"]),
+  })).max(30).optional().default([]),
 });
 
 const getDemoRoadmap = (input: RoadmapInput) => ({
   sections: [
-    {
-      title: "Getting Started",
-      topics: [
-        "Basic Concepts",
-        "Development Environment Setup",
-        "Version Control Basics",
-      ],
-    },
-    {
-      title: "Core Skills",
-      topics: [
-        `${input.skillLevel} Level Programming`,
-        "Problem Solving",
-        "Data Structures",
-      ],
-    },
-    {
-      title: "Advanced Topics",
-      topics: [
-        "System Design",
-        "Best Practices",
-        "Industry Standards",
-      ],
-    },
+    { title: "Getting Started", topics: ["Basic Concepts", "Development Environment Setup", "Version Control Basics"] },
+    { title: "Core Skills", topics: [`${input.skillLevel} Level Programming`, "Problem Solving", "Data Structures"] },
+    { title: "Advanced Topics", topics: ["System Design", "Best Practices", "Industry Standards"] },
   ],
   resources: [],
 });
 
-const extractJson = (content: string) => {
-  const trimmed = content.trim();
-  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
-  return fenced?.[1] ?? trimmed;
-};
-
 export const generateRoadmap = async (input: RoadmapInput) => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+  const safeInput = {
+    skillLevel: input.skillLevel,
+    careerGoal: input.careerGoal.trim().slice(0, 160),
+    learningStyle: input.learningStyle.trim().slice(0, 80),
+  };
+  if (!safeInput.careerGoal) throw new Error("Please provide a career goal.");
 
-  if (!apiKey) {
-    console.warn("No Gemini API key found, using curated fallback roadmap.");
-    return getDemoRoadmap(input);
+  const { data, error } = await supabase.functions.invoke("generate-roadmap", {
+    body: safeInput,
+  });
+
+  if (error) {
+    console.error("Roadmap generation failed:", error);
+    throw new Error("Could not generate a roadmap right now. Please try again later.");
   }
 
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-3.8-flash" });
-
-  const prompt = `Create a detailed learning roadmap for a ${input.skillLevel} level student interested in ${input.careerGoal}.
-They prefer ${input.learningStyle} learning style.
-Return only valid JSON matching this structure:
-{
-  "sections": [
-    { "title": "string", "topics": ["string"] }
-  ],
-  "resources": [
-    { "title": "string", "url": "https://...", "type": "documentation|course|tutorial|guide" }
-  ]
-}`;
-
-  const result = await model.generateContent(prompt);
-  const content = (await result.response).text();
-
-  if (!content) {
-    throw new Error("Gemini returned an empty response.");
-  }
-
-  let parsedJson: unknown;
-  try {
-    parsedJson = JSON.parse(extractJson(content));
-  } catch {
-    throw new Error("Gemini returned invalid JSON.");
-  }
-
-  const parsed = RoadmapSchema.safeParse(parsedJson);
+  const parsed = RoadmapSchema.safeParse(data);
   if (!parsed.success) {
-    console.error("Invalid Gemini roadmap schema:", parsed.error.flatten());
-    throw new Error("Gemini returned an invalid roadmap format.");
+    console.error("Invalid roadmap response:", parsed.error.flatten());
+    throw new Error("The roadmap service returned an invalid response.");
   }
 
+  // This fallback is intentionally not automatic: API errors should be visible rather
+  // than silently presenting a generic roadmap as if it were personalized.
   return parsed.data;
 };
+
+export { getDemoRoadmap };

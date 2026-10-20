@@ -45,9 +45,9 @@ Learner context (skill level + career goal + learning style)
 - src/components — reusable UI and roadmap components
 - src/data — curated roadmap definitions
 - src/hooks — auth, roadmap, progress and preference logic
-- src/pages — route-level application screens
-- src/schemas — Zod validation schemas
-- src/types — shared TypeScript types
+- src/pages — route-level screens
+- src/schemas — shared validation schemas
+- src/types — shared types
 - src/utils — AI and learning-resource utilities
 - src/integrations/supabase — Supabase client and generated database types
 
@@ -63,17 +63,24 @@ Set these variables in .env:
 
 - VITE_SUPABASE_URL
 - VITE_SUPABASE_PUBLISHABLE_KEY
-- VITE_GEMINI_API_KEY
 
-Only use a Supabase publishable/anon key in the browser. Never put a Supabase secret/service-role key in VITE_* variables.
+Only use a Supabase publishable/anon key in the browser. Never put a Supabase secret/service-role key or Gemini API key in VITE_* variables. Roadmap generation runs through the authenticated Supabase Edge Function `generate-roadmap`; configure `GEMINI_API_KEY` as an Edge Function secret, not a frontend variable.
 
-## Database security
+## Database and Edge Function setup
 
-The repository includes:
+The repository migrations in `supabase/migrations` enable row-level security for user-owned data and add a per-user hourly quota for AI roadmap generation.
 
-supabase/migrations/20261006143000_harden_user_data_rls.sql
+Confirm that the Supabase URL and publishable key used by the frontend point to the project referenced in `supabase/config.toml`. Then apply migrations and deploy the function:
 
-Apply this migration to the linked Supabase project before production use. It enables Row Level Security and restricts profiles, roadmaps, and progress records to their owning authenticated user.
+    supabase db push
+    supabase functions deploy generate-roadmap
+
+Set `GEMINI_API_KEY` as a Supabase Edge Function secret through the Dashboard or with the Supabase CLI. Do not commit the secret or put it in a `VITE_*` variable. If using a local secrets file, keep it out of source control.
+
+Run the Edge Function checks with:
+
+    deno check supabase/functions/generate-roadmap/index.ts
+    deno test supabase/functions/_shared/roadmap_test.ts
 
 ## Verification
 
@@ -82,7 +89,7 @@ Run locally:
     npm run lint
     npm run build
 
-GitHub Actions also runs lint and build verification for pushes to main and pull requests.
+GitHub Actions runs the Edge Function type check and validation tests, plus frontend lint and build checks, on pull requests and pushes to main.
 
 ## Important implementation notes
 
