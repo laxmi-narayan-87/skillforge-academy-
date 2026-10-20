@@ -2,7 +2,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 
 interface RoadmapInput {
-  skillLevel: "beginner" | "intermediate" | "advanced";
+  skillLevel: string;
   careerGoal: string;
   learningStyle: string;
 }
