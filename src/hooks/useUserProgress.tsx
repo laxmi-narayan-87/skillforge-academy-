@@ -1,8 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import type { UserProgress, UserPreferences } from "@/types/user";
-
 
 const defaultPreferences: UserPreferences = {
   learningStyle: "visual",
@@ -10,24 +9,38 @@ const defaultPreferences: UserPreferences = {
   goals: [],
 };
 
-export const useUserProgress = (roadmapId?: string) => {
-  const [progress, setProgress] = useState<UserProgress>({
-    completedTopics: [],
-    currentLevel: "beginner",
-    interests: [],
-    lastActivity: new Date(),
-  });
+const createInitialProgress = (): UserProgress => ({
+  completedTopics: [],
+  currentLevel: "beginner",
+  interests: [],
+  lastActivity: new Date(),
+});
 
+export const useUserProgress = (roadmapId?: string) => {
+  const [progress, setProgress] = useState<UserProgress>(createInitialProgress);
   const progressRef = useRef<UserProgress>(progress);
+  const activeRoadmapId = useRef(roadmapId);
+  const completedTopicsByRoadmap = useRef(new Map<string, string[]>());
   const progressSaveQueue = useRef<Promise<void>>(Promise.resolve());
 
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
-
   const { toast } = useToast();
+
+  const resetProgress = useCallback(() => {
+    completedTopicsByRoadmap.current.clear();
+    const nextProgress = createInitialProgress();
+    progressRef.current = nextProgress;
+    setProgress(nextProgress);
+    setPreferences(defaultPreferences);
+  }, []);
 
   useEffect(() => {
     progressRef.current = progress;
   }, [progress]);
+
+  useEffect(() => {
+    activeRoadmapId.current = roadmapId;
+  }, [roadmapId]);
 
   useEffect(() => {
     let mounted = true;
@@ -54,11 +67,7 @@ export const useUserProgress = (roadmapId?: string) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_OUT") {
-        setProgress(prev => ({
-          ...prev,
-          completedTopics: [],
-          currentLevel: "beginner",
-        }));
+        resetProgress();
       } else if (event === "SIGNED_IN" || event === "USER_UPDATED") {
         const metadata = session?.user?.user_metadata ?? {};
         if (metadata.preferences) {
@@ -78,7 +87,7 @@ export const useUserProgress = (roadmapId?: string) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, []);
+  }, [resetProgress]);
 
   useEffect(() => {
     let mounted = true;
@@ -88,7 +97,8 @@ export const useUserProgress = (roadmapId?: string) => {
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        if (mounted) {
+        completedTopicsByRoadmap.current.delete(roadmapId);
+        if (mounted && activeRoadmapId.current === roadmapId) {
           setProgress(prev => ({ ...prev, completedTopics: [] }));
         }
         return;
@@ -113,17 +123,18 @@ export const useUserProgress = (roadmapId?: string) => {
         return;
       }
 
-      setProgress(prev => ({
-        ...prev,
-        completedTopics: data?.completed_topics ?? [],
-      }));
+      const completedTopics = data?.completed_topics ?? [];
+      completedTopicsByRoadmap.current.set(roadmapId, completedTopics);
+      if (activeRoadmapId.current === roadmapId) {
+        setProgress(prev => ({ ...prev, completedTopics }));
+      }
     };
 
     fetchUserProgress();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "SIGNED_OUT") {
-        setProgress(prev => ({ ...prev, completedTopics: [] }));
+        resetProgress();
       } else if (event === "SIGNED_IN") {
         fetchUserProgress();
       }
@@ -133,8 +144,7 @@ export const useUserProgress = (roadmapId?: string) => {
       mounted = false;
       subscription.unsubscribe();
     };
-  }, [roadmapId, toast]);
-
+  }, [roadmapId, resetProgress, toast]);
 
   const updatePreferences = async (newPreferences: UserPreferences) => {
     setPreferences(newPreferences);
@@ -176,7 +186,8 @@ export const useUserProgress = (roadmapId?: string) => {
   };
 
   const markTopicComplete = async (topicId: string) => {
-    if (!roadmapId) return;
+    const targetRoadmapId = roadmapId;
+    if (!targetRoadmapId) return;
 
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -188,38 +199,60 @@ export const useUserProgress = (roadmapId?: string) => {
     }
 
     const saveProgress = async () => {
-      const currentTopics = progressRef.current.completedTopics;
-      if (currentTopics.includes(topicId)) return;
+      try {
+        let currentTopics = completedTopicsByRoadmap.current.get(targetRoadmapId);
+        if (currentTopics === undefined) {
+          const { data, error } = await supabase
+            .from("user_progress")
+            .select("completed_topics")
+            .eq("user_id", user.id)
+            .eq("roadmap_id", targetRoadmapId)
+            .maybeSingle();
 
-      const nextProgress: UserProgress = {
-        ...progressRef.current,
-        completedTopics: [...currentTopics, topicId],
-        lastActivity: new Date(),
-      };
-      const { error } = await supabase
-        .from("user_progress")
-        .upsert({
-          user_id: user.id,
-          roadmap_id: roadmapId,
-          completed_topics: nextProgress.completedTopics,
-        }, {
-          onConflict: "user_id,roadmap_id",
-        });
+          if (error) throw error;
+          currentTopics = data?.completed_topics ?? [];
+        }
 
-      if (error) {
+        if (currentTopics.includes(topicId)) {
+          completedTopicsByRoadmap.current.set(targetRoadmapId, currentTopics);
+          return;
+        }
+
+        const nextTopics = [...currentTopics, topicId];
+        const { error } = await supabase
+          .from("user_progress")
+          .upsert({
+            user_id: user.id,
+            roadmap_id: targetRoadmapId,
+            completed_topics: nextTopics,
+          }, {
+            onConflict: "user_id,roadmap_id",
+          });
+
+        if (error) throw error;
+
+        // Do not let a delayed save from an old session repopulate the current UI.
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        if (currentUser?.id !== user.id) return;
+
+        completedTopicsByRoadmap.current.set(targetRoadmapId, nextTopics);
+        if (activeRoadmapId.current !== targetRoadmapId) return;
+
+        const nextProgress: UserProgress = {
+          ...progressRef.current,
+          completedTopics: nextTopics,
+          lastActivity: new Date(),
+        };
+        progressRef.current = nextProgress;
+        setProgress(nextProgress);
+      } catch (error) {
         console.error("Error saving progress:", error);
         toast({
           title: "Error saving progress",
           description: "Your change could not be saved. Please try again.",
           variant: "destructive",
         });
-        return;
       }
-
-      // Update the ref synchronously so queued topic completions build on the
-      // latest successfully persisted state, not a stale React render.
-      progressRef.current = nextProgress;
-      setProgress(nextProgress);
     };
 
     progressSaveQueue.current = progressSaveQueue.current.then(saveProgress, saveProgress);

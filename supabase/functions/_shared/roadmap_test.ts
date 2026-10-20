@@ -8,6 +8,11 @@ const valid = {
 
 Deno.test("accepts a well-formed HTTPS roadmap", () => assertEquals(validateRoadmap(valid), true));
 Deno.test("rejects missing sections", () => assertEquals(validateRoadmap({ sections: [] }), false));
+Deno.test("rejects non-object root values", () => {
+  for (const value of [null, [], "not an object", 42]) {
+    assertEquals(validateRoadmap(value), false);
+  }
+});
 Deno.test("rejects non-HTTPS resource URLs", () => assertEquals(validateRoadmap({
   ...valid, resources: [{ title: "Unsafe", url: "http://example.com", type: "guide" }],
 }), false));

@@ -21,7 +21,7 @@ begin
   if caller_id is null then
     raise exception 'Authentication required';
   end if;
-  if p_limit < 1 or p_limit > 100 then
+  if p_limit is null or p_limit < 1 or p_limit > 100 then
     raise exception 'Invalid quota limit';
   end if;
 
@@ -32,9 +32,11 @@ begin
         when usage.window_started_at <= now() - interval '1 hour' then now()
         else usage.window_started_at
       end,
+      -- Stop counting after the first rejected request to prevent overflow
+      -- while preserving an atomic per-user quota check under concurrency.
       request_count = case
         when usage.window_started_at <= now() - interval '1 hour' then 1
-        else usage.request_count + 1
+        else least(usage.request_count + 1, p_limit + 1)
       end
   returning request_count into updated_count;
 

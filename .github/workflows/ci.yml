@@ -26,6 +26,9 @@ jobs:
         with:
           deno-version: v2.x
 
+      - name: Type-check Edge Function
+        run: deno check supabase/functions/generate-roadmap/index.ts
+
       - name: Edge Function validation tests
         run: deno test supabase/functions/_shared/roadmap_test.ts
 
