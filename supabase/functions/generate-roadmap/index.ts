@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { readTextWithinLimit, validString, validateRoadmap } from "../_shared/roadmap.ts";
+import { readTextWithinLimit, validLearningStyle, validSkillLevel, validString, validateRoadmap } from "../_shared/roadmap.ts";
 
 const MAX_REQUEST_BODY_BYTES = 8_000;
 
@@ -90,14 +90,13 @@ Deno.serve(async (req) => {
   const skillLevel = body.skillLevel;
   const careerGoal = body.careerGoal;
   const learningStyle = body.learningStyle;
-  if (!["beginner", "intermediate", "advanced"].includes(String(skillLevel)) ||
-      !validString(careerGoal, 160) || !validString(learningStyle, 80)) {
+  if (!validSkillLevel(skillLevel) ||
+      !validString(careerGoal, 160) || !validLearningStyle(learningStyle)) {
     return json({ error: "Invalid roadmap preferences" }, 400);
   }
 
   const { data: allowed, error: quotaError } = await supabase.rpc(
     "consume_ai_generation_quota",
-    { p_limit: 10 },
   );
   if (quotaError) {
     console.error("Unable to check generation quota", quotaError.message);
