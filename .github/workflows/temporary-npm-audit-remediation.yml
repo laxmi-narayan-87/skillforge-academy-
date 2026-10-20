@@ -1,0 +1,62 @@
+name: Temporary npm audit remediation
+
+on:
+  push:
+    branches:
+      - "security/npm-audit-fix-20261020"
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Report baseline npm audit
+        run: |
+          npm audit --json > /tmp/npm-audit-before.json || true
+          node -e 'const a=require("/tmp/npm-audit-before.json"); console.log(JSON.stringify({counts:a.metadata?.vulnerabilities, packages:Object.entries(a.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,direct:v.isDirect,fixAvailable:v.fixAvailable,via:(v.via||[]).map(x=>typeof x==="string"?x:{name:x.name,title:x.title,url:x.url}))}).sort((x,y)=>({critical:0,high:1,moderate:2,low:3}[x.severity]-({critical:0,high:1,moderate:2,low:3}[y.severity]))).slice(0,60)},null,2))'
+
+      - name: Apply semver-compatible security fixes only
+        continue-on-error: true
+        run: npm audit fix --no-fund --no-progress
+
+      - name: Report remaining npm audit
+        run: |
+          npm audit --json > /tmp/npm-audit-after.json || true
+          node -e 'const a=require("/tmp/npm-audit-after.json"); console.log(JSON.stringify({counts:a.metadata?.vulnerabilities, packages:Object.entries(a.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,direct:v.isDirect,fixAvailable:v.fixAvailable,via:(v.via||[]).map(x=>typeof x==="string"?x:{name:x.name,title:x.title,url:x.url}))}).sort((x,y)=>({critical:0,high:1,moderate:2,low:3}[x.severity]-({critical:0,high:1,moderate:2,low:3}[y.severity]))).slice(0,60)},null,2))'
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build
+
+      - name: Commit compatible package updates on this audit branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- package.json package-lock.json; then
+            echo "No semver-compatible dependency updates to commit."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package.json package-lock.json
+          git commit -m "chore: apply compatible npm audit fixes"
+          gh auth setup-git
+          git push origin "HEAD:${GITHUB_REF_NAME}"
