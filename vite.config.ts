@@ -6,7 +6,7 @@ import { componentTagger } from "lovable-tagger";
 export default defineConfig(({ mode }) => ({
   base: process.env.VERCEL ? "/" : "/skillforge-academy-/",
   server: {
-    host: process.env.HOST ?? "127.0.0.1", // Opt in to remote access with HOST=0.0.0.0
+    host: process.env.HOST || "127.0.0.1", // Opt in to remote access with HOST=0.0.0.0
     port: 8080,
     strictPort: true,
   },
@@ -22,6 +22,6 @@ export default defineConfig(({ mode }) => ({
   preview: {
     port: 8080,
     strictPort: true,
-    host: process.env.HOST ?? "127.0.0.1",
+    host: process.env.HOST || "127.0.0.1",
   }
 }));
