@@ -18,18 +18,19 @@ const json = (body: unknown, status = 200) =>
   });
 
 function getSupabaseApiKey(): string | undefined {
-  const legacyKey = Deno.env.get("SUPABASE_ANON_KEY");
-  if (legacyKey) return legacyKey;
-
   try {
     const publishableKeys = JSON.parse(
       Deno.env.get("SUPABASE_PUBLISHABLE_KEYS") ?? "{}",
     ) as Record<string, unknown>;
     const defaultKey = publishableKeys.default;
-    return typeof defaultKey === "string" ? defaultKey : undefined;
+    if (typeof defaultKey === "string") return defaultKey;
   } catch {
-    return undefined;
+    // Fall back to the key variables used by older/self-hosted projects.
   }
+
+  return Deno.env.get("SUPABASE_PUBLISHABLE_KEY") ||
+    Deno.env.get("SUPABASE_ANON_KEY") ||
+    undefined;
 }
 
 Deno.serve(async (req) => {
@@ -103,11 +104,13 @@ Deno.serve(async (req) => {
   let upstream: Response;
   try {
     upstream = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=" +
-        encodeURIComponent(geminiKey),
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent",
       {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": geminiKey,
+        },
         body: JSON.stringify({
           systemInstruction: {
             parts: [{

@@ -111,7 +111,8 @@ export const useUserProgress = (roadmapId?: string) => {
         .eq("user_id", user.id)
         .maybeSingle();
 
-      if (!mounted) return;
+      const { data: { user: currentUser } } = await supabase.auth.getUser();
+      if (!mounted || currentUser?.id !== user.id) return;
 
       if (error) {
         console.error("Error fetching progress:", error);
