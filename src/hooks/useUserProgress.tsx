@@ -139,7 +139,6 @@ export const useUserProgress = (roadmapId?: string) => {
   const updatePreferences = async (newPreferences: UserPreferences) => {
     setPreferences(newPreferences);
 
-    const { data: { user } } = await supabase.auth.getUser();
     const { error } = await supabase.auth.updateUser({
       data: { preferences: newPreferences },
     });
