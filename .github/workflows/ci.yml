@@ -29,7 +29,7 @@ jobs:
         run: npm ci
 
       - name: Audit production dependency vulnerabilities
-        run: npm audit --omit=dev --audit-level=high
+        run: node scripts/check-production-audit.mjs
 
       - name: Report full dependency advisories
         run: |
