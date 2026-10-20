@@ -59,6 +59,8 @@ Learner context (skill level + career goal + learning style)
     cp .env.example .env
     npm run dev
 
+The Vite dev and preview servers bind to `127.0.0.1` by default. Set `HOST=0.0.0.0` only when remote access is needed, and only on a trusted network.
+
 Set these variables in .env:
 
 - VITE_SUPABASE_URL
