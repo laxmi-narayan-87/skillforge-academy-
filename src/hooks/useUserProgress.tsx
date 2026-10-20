@@ -188,20 +188,11 @@ export const useUserProgress = (roadmapId?: string) => {
     }
 
     const currentTopics = progressRef.current.completedTopics;
-    const nextCompletedTopics = currentTopics.includes(topicId)
-      ? currentTopics
-      : [...currentTopics, topicId];
+    if (currentTopics.includes(topicId)) return;
+    const nextCompletedTopics = [...currentTopics, topicId];
 
-    setProgress(prev => ({
-      ...prev,
-      completedTopics: prev.completedTopics.includes(topicId)
-        ? prev.completedTopics
-        : [...prev.completedTopics, topicId],
-      lastActivity: new Date(),
-    }));
-
-    if (!user) return;
-
+    // Persist first, then update the UI. This avoids a destructive rollback when a
+    // topic was already completed before a failed or overlapping request.
     const { error } = await supabase
       .from("user_progress")
       .upsert({
@@ -214,16 +205,21 @@ export const useUserProgress = (roadmapId?: string) => {
 
     if (error) {
       console.error("Error saving progress:", error);
-      setProgress(prev => ({
-        ...prev,
-        completedTopics: prev.completedTopics.filter(topic => topic !== topicId),
-      }));
       toast({
         title: "Error saving progress",
         description: "Your change could not be saved. Please try again.",
         variant: "destructive",
       });
+      return;
     }
+
+    setProgress(prev => ({
+      ...prev,
+      completedTopics: prev.completedTopics.includes(topicId)
+        ? prev.completedTopics
+        : [...prev.completedTopics, topicId],
+      lastActivity: new Date(),
+    }));
   };
 
   const getRecommendedContent = () => {
