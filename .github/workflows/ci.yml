@@ -21,6 +21,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Setup Deno
+        uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+
+      - name: Edge Function validation tests
+        run: deno test supabase/functions/_shared/roadmap_test.ts
+
       - name: Lint
         run: npm run lint
 
