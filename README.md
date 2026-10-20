@@ -98,3 +98,12 @@ GitHub Actions runs the Edge Function type check and validation tests, plus fron
 - Topic progress is scoped by both user_id and roadmap_id.
 - AI output is validated before it is accepted by the application.
 - Learning links are curated resources, not a live course-ranking API.
+
+## GitHub Pages deployment
+
+The Pages workflow requires these repository Actions secrets, both targeting the same active Supabase project referenced by `supabase/config.toml`:
+
+- `VITE_SUPABASE_URL`
+- `VITE_SUPABASE_PUBLISHABLE_KEY`
+
+The workflow now stops before building if either value is missing so it cannot publish a blank/broken app. Initialize Pages once in **Repository Settings → Pages → Build and deployment → Source → GitHub Actions**. The connected workflow token cannot enable an uninitialized Pages site by itself. Vercel deployment is separate from GitHub Pages.

@@ -30,6 +30,21 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify deployment configuration
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
+        run: |
+          if [ -z "$VITE_SUPABASE_URL" ]; then
+            echo "::error::Set the repository Actions secret VITE_SUPABASE_URL to the active Supabase project URL."
+            exit 1
+          fi
+          if [ -z "$VITE_SUPABASE_PUBLISHABLE_KEY" ]; then
+            echo "::error::Set the repository Actions secret VITE_SUPABASE_PUBLISHABLE_KEY to the matching Supabase publishable key."
+            exit 1
+          fi
+          node -e 'const u = new URL(process.env.VITE_SUPABASE_URL); if (u.protocol !== "https:") process.exit(1)'
+
       - name: Build
         run: npm run build
         env:

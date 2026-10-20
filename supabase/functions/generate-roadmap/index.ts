@@ -121,7 +121,6 @@ Deno.serve(async (req) => {
           generationConfig: {
             responseMimeType: "application/json",
             maxOutputTokens: 6_000,
-            temperature: 0.4,
           },
         }),
         signal: AbortSignal.timeout(25_000),
