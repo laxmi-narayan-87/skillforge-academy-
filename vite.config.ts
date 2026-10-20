@@ -1,18 +1,19 @@
 import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
-import { componentTagger } from "lovable-tagger";
 
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   base: process.env.VERCEL ? "/" : "/skillforge-academy-/",
   server: {
-    host: "0.0.0.0", // This ensures proper network access
+    host: process.env.HOST || "127.0.0.1", // Opt in to remote access with HOST=0.0.0.0
     port: 8080,
     strictPort: true,
   },
   plugins: [
+    tailwindcss(),
     react(),
-    mode === 'development' && componentTagger(),
+    
   ].filter(Boolean),
   resolve: {
     alias: {
@@ -22,6 +23,6 @@ export default defineConfig(({ mode }) => ({
   preview: {
     port: 8080,
     strictPort: true,
-    host: "0.0.0.0",
+    host: process.env.HOST || "127.0.0.1",
   }
 }));

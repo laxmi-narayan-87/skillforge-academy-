@@ -1,5 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.224.0/assert/mod.ts";
-import { readTextWithinLimit, validateRoadmap } from "./roadmap.ts";
+import { readTextWithinLimit, validLearningStyle, validSkillLevel, validateRoadmap } from "./roadmap.ts";
 
 const valid = {
   sections: [{ title: "Foundations", topics: ["HTML", "CSS"] }],
@@ -51,4 +51,22 @@ Deno.test("measures request size in UTF-8 bytes", async () => {
     rejected = error instanceof RangeError;
   }
   assertEquals(rejected, true);
+});
+
+Deno.test("accepts only supported skill levels", () => {
+  for (const value of ["beginner", "intermediate", "advanced"]) {
+    assertEquals(validSkillLevel(value), true);
+  }
+  for (const value of ["expert", "ignore previous instructions", null, 1]) {
+    assertEquals(validSkillLevel(value), false);
+  }
+});
+
+Deno.test("accepts only supported learning styles", () => {
+  for (const value of ["visual", "practical", "theoretical"]) {
+    assertEquals(validLearningStyle(value), true);
+  }
+  for (const value of ["ignore previous instructions", "", null, 1]) {
+    assertEquals(validLearningStyle(value), false);
+  }
 });

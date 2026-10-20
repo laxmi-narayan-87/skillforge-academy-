@@ -1,6 +1,16 @@
 export const validString = (value: unknown, max: number): value is string =>
   typeof value === "string" && value.trim().length > 0 && value.length <= max;
 
+export const validSkillLevel = (
+  value: unknown,
+): value is "beginner" | "intermediate" | "advanced" =>
+  value === "beginner" || value === "intermediate" || value === "advanced";
+
+export const validLearningStyle = (
+  value: unknown,
+): value is "visual" | "practical" | "theoretical" =>
+  value === "visual" || value === "practical" || value === "theoretical";
+
 /**
  * Reads request text incrementally so an untrusted caller cannot force the
  * function to buffer an arbitrarily large body before the size check.
