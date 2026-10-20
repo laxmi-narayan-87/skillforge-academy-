@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { validString, validateRoadmap } from "../_shared/roadmap.ts";
+import { readTextWithinLimit, validString, validateRoadmap } from "../_shared/roadmap.ts";
+
+const MAX_REQUEST_BODY_BYTES = 8_000;
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -60,25 +62,30 @@ Deno.serve(async (req) => {
     return json({ error: "Unable to validate the current session" }, 503);
   }
 
-  if (Number(req.headers.get("content-length") ?? 0) > 8_000) {
+  if (Number(req.headers.get("content-length") ?? 0) > MAX_REQUEST_BODY_BYTES) {
     return json({ error: "Request too large" }, 413);
   }
 
-  let body: Record<string, unknown>;
+  let raw: string;
   try {
-    const raw = await req.text();
-    if (new TextEncoder().encode(raw).byteLength > 8_000) {
-      return json({ error: "Request too large" }, 413);
-    }
+    raw = await readTextWithinLimit(req.body, MAX_REQUEST_BODY_BYTES);
+  } catch (error) {
+    if (error instanceof RangeError) return json({ error: "Request too large" }, 413);
+    console.error("Unable to read roadmap request body");
+    return json({ error: "Invalid JSON body" }, 400);
+  }
 
-    const parsed: unknown = JSON.parse(raw);
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return json({ error: "Request body must be a JSON object" }, 400);
-    }
-    body = parsed as Record<string, unknown>;
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
   } catch {
     return json({ error: "Invalid JSON body" }, 400);
   }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return json({ error: "Request body must be a JSON object" }, 400);
+  }
+  const body = parsed as Record<string, unknown>;
 
   const skillLevel = body.skillLevel;
   const careerGoal = body.careerGoal;

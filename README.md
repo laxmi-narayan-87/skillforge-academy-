@@ -66,6 +66,16 @@ Set these variables in .env:
 
 Only use a Supabase publishable/anon key in the browser. Never put a Supabase secret/service-role key or Gemini API key in VITE_* variables. Roadmap generation runs through the authenticated Supabase Edge Function `generate-roadmap`; configure `GEMINI_API_KEY` as an Edge Function secret, not a frontend variable.
 
+## GitHub Pages deployment
+
+The Pages workflow requires a one-time repository setting and public frontend configuration:
+
+1. In **Settings → Pages → Build and deployment**, set **Source** to **GitHub Actions**. The workflow intentionally does not try to enable Pages automatically because that requires a separate, elevated token.
+2. Add repository **Actions variables** named `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY`. Use the HTTPS URL and publishable key for the same project referenced by `supabase/config.toml`. These are public browser configuration values, not service-role secrets.
+3. The workflow checks that both variables are present and that the URL uses HTTPS before building; it fails early rather than publishing a site that cannot initialize Supabase.
+
+If the `configure-pages` action reports that the Pages site was not found, complete step 1 in repository settings. The workflow cannot enable the Pages site with the default `GITHUB_TOKEN`.
+
 ## Database and Edge Function setup
 
 The repository migrations in `supabase/migrations` enable row-level security for user-owned data and add a per-user hourly quota for AI roadmap generation.
@@ -98,12 +108,3 @@ GitHub Actions runs the Edge Function type check and validation tests, plus fron
 - Topic progress is scoped by both user_id and roadmap_id.
 - AI output is validated before it is accepted by the application.
 - Learning links are curated resources, not a live course-ranking API.
-
-## GitHub Pages deployment
-
-The Pages workflow requires these repository Actions secrets, both targeting the same active Supabase project referenced by `supabase/config.toml`:
-
-- `VITE_SUPABASE_URL`
-- `VITE_SUPABASE_PUBLISHABLE_KEY`
-
-The workflow now stops before building if either value is missing so it cannot publish a blank/broken app. Initialize Pages once in **Repository Settings → Pages → Build and deployment → Source → GitHub Actions**. The connected workflow token cannot enable an uninitialized Pages site by itself. Vercel deployment is separate from GitHub Pages.
