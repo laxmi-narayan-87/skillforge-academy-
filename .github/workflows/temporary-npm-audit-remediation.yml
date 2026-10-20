@@ -29,7 +29,23 @@ jobs:
       - name: Report baseline npm audit
         run: |
           npm audit --json > /tmp/npm-audit-before.json || true
-          node -e 'const a=require("/tmp/npm-audit-before.json"); console.log(JSON.stringify({counts:a.metadata?.vulnerabilities, packages:Object.entries(a.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,direct:v.isDirect,fixAvailable:v.fixAvailable,via:(v.via||[]).map(x=>typeof x==="string"?x:{name:x.name,title:x.title,url:x.url}))}).sort((x,y)=>({critical:0,high:1,moderate:2,low:3}[x.severity]-({critical:0,high:1,moderate:2,low:3}[y.severity]))).slice(0,60)},null,2))'
+          node <<'NODE'
+          const fs = require("fs");
+          const a = JSON.parse(fs.readFileSync("/tmp/npm-audit-before.json", "utf8"));
+          const rank = { critical: 0, high: 1, moderate: 2, low: 3 };
+          const packages = Object.entries(a.vulnerabilities || {})
+            .map(([name, v]) => ({
+              name,
+              severity: v.severity,
+              direct: v.isDirect,
+              fixAvailable: v.fixAvailable,
+              via: (v.via || []).map((x) => typeof x === "string"
+                ? x
+                : { name: x.name, title: x.title, url: x.url }),
+            }))
+            .sort((x, y) => (rank[x.severity] ?? 9) - (rank[y.severity] ?? 9));
+          console.log(JSON.stringify({ counts: a.metadata?.vulnerabilities, packages }, null, 2));
+          NODE
 
       - name: Apply semver-compatible security fixes only
         continue-on-error: true
@@ -38,7 +54,23 @@ jobs:
       - name: Report remaining npm audit
         run: |
           npm audit --json > /tmp/npm-audit-after.json || true
-          node -e 'const a=require("/tmp/npm-audit-after.json"); console.log(JSON.stringify({counts:a.metadata?.vulnerabilities, packages:Object.entries(a.vulnerabilities||{}).map(([name,v])=>({name,severity:v.severity,direct:v.isDirect,fixAvailable:v.fixAvailable,via:(v.via||[]).map(x=>typeof x==="string"?x:{name:x.name,title:x.title,url:x.url}))}).sort((x,y)=>({critical:0,high:1,moderate:2,low:3}[x.severity]-({critical:0,high:1,moderate:2,low:3}[y.severity]))).slice(0,60)},null,2))'
+          node <<'NODE'
+          const fs = require("fs");
+          const a = JSON.parse(fs.readFileSync("/tmp/npm-audit-after.json", "utf8"));
+          const rank = { critical: 0, high: 1, moderate: 2, low: 3 };
+          const packages = Object.entries(a.vulnerabilities || {})
+            .map(([name, v]) => ({
+              name,
+              severity: v.severity,
+              direct: v.isDirect,
+              fixAvailable: v.fixAvailable,
+              via: (v.via || []).map((x) => typeof x === "string"
+                ? x
+                : { name: x.name, title: x.title, url: x.url }),
+            }))
+            .sort((x, y) => (rank[x.severity] ?? 9) - (rank[y.severity] ?? 9));
+          console.log(JSON.stringify({ counts: a.metadata?.vulnerabilities, packages }, null, 2));
+          NODE
 
       - name: Lint
         run: npm run lint
