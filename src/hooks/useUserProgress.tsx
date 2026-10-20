@@ -19,6 +19,7 @@ export const useUserProgress = (roadmapId?: string) => {
   });
 
   const progressRef = useRef<UserProgress>(progress);
+  const progressSaveQueue = useRef<Promise<void>>(Promise.resolve());
 
   const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
 
@@ -187,39 +188,43 @@ export const useUserProgress = (roadmapId?: string) => {
       return;
     }
 
-    const currentTopics = progressRef.current.completedTopics;
-    if (currentTopics.includes(topicId)) return;
-    const nextCompletedTopics = [...currentTopics, topicId];
+    const saveProgress = async () => {
+      const currentTopics = progressRef.current.completedTopics;
+      if (currentTopics.includes(topicId)) return;
 
-    // Persist first, then update the UI. This avoids a destructive rollback when a
-    // topic was already completed before a failed or overlapping request.
-    const { error } = await supabase
-      .from("user_progress")
-      .upsert({
-        user_id: user.id,
-        roadmap_id: roadmapId,
-        completed_topics: nextCompletedTopics,
-      }, {
-        onConflict: "user_id,roadmap_id",
-      });
+      const nextProgress: UserProgress = {
+        ...progressRef.current,
+        completedTopics: [...currentTopics, topicId],
+        lastActivity: new Date(),
+      };
+      const { error } = await supabase
+        .from("user_progress")
+        .upsert({
+          user_id: user.id,
+          roadmap_id: roadmapId,
+          completed_topics: nextProgress.completedTopics,
+        }, {
+          onConflict: "user_id,roadmap_id",
+        });
 
-    if (error) {
-      console.error("Error saving progress:", error);
-      toast({
-        title: "Error saving progress",
-        description: "Your change could not be saved. Please try again.",
-        variant: "destructive",
-      });
-      return;
-    }
+      if (error) {
+        console.error("Error saving progress:", error);
+        toast({
+          title: "Error saving progress",
+          description: "Your change could not be saved. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
 
-    setProgress(prev => ({
-      ...prev,
-      completedTopics: prev.completedTopics.includes(topicId)
-        ? prev.completedTopics
-        : [...prev.completedTopics, topicId],
-      lastActivity: new Date(),
-    }));
+      // Update the ref synchronously so queued topic completions build on the
+      // latest successfully persisted state, not a stale React render.
+      progressRef.current = nextProgress;
+      setProgress(nextProgress);
+    };
+
+    progressSaveQueue.current = progressSaveQueue.current.then(saveProgress, saveProgress);
+    await progressSaveQueue.current;
   };
 
   const getRecommendedContent = () => {
