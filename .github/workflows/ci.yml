@@ -25,25 +25,14 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Generate and audit dependency lockfile for review
-        run: |
-          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
-          npm audit fix --package-lock-only --ignore-scripts --no-progress || true
-          echo LOCKFILE_BEGIN
-          cat package-lock.json
-          echo LOCKFILE_END
-
       - name: Install dependencies
         run: npm ci
 
       - name: Audit production dependency vulnerabilities
-        run: node scripts/check-production-audit.mjs
+        run: npm audit --omit=dev --audit-level=high
 
-      - name: Report full dependency advisories
-        run: |
-          npm audit --audit-level=high || {
-            echo "::warning::The full dependency tree has high-severity advisories. Production dependencies are gated separately; see the audit output for development-toolchain findings."
-          }
+      - name: Audit full dependency tree
+        run: npm audit --audit-level=high
 
       - name: Setup Deno
         uses: denoland/setup-deno@e95548e56dfa95d4e1a28d6f422fafe75c4c26fb # v2.0.3
